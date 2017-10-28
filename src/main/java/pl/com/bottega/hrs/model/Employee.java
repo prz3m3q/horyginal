@@ -4,11 +4,11 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.Optional;
 
 @Entity
 @Table(name = "employees")
-public class Employee {
+public class Employee extends HrsModel {
 
     @Id
     @Column(name = "emp_no")
@@ -38,13 +38,17 @@ public class Employee {
     @JoinColumn(name = "emp_no")
     private Collection<Salary> salaries = new LinkedList<>();
 
+    @Transient
+    private TimeProvider timeProvider;
+
     public Employee() {}
 
-    public Employee(Integer empNo, String firstName, String lastName, LocalDate birthDate, Address address) {
+    public Employee(Integer empNo, String firstName, String lastName, LocalDate birthDate, Address address, TimeProvider timeProvider) {
         this.empNo = empNo;
         this.birthDate = birthDate;
         this.address = address;
-        this.hireDate = LocalDate.now();
+        this.timeProvider = timeProvider;
+        this.hireDate = timeProvider.today();
         this.firstName = firstName;
         this.lastName = lastName;
     }
@@ -65,5 +69,42 @@ public class Employee {
 
     public Collection<Salary> getSalaries() {
         return salaries;
+    }
+
+    public void changeSalary(Integer salary) {
+        Optional<Salary> currentSalaryOptional = getCurrentSalary();
+        if (currentSalaryOptional.isPresent()) {
+            removeOrTerminateSalary(salary, currentSalaryOptional);
+        }
+        addNewSalary(salary);
+    }
+
+    private void addNewSalary(Integer salary) {
+        salaries.add(new Salary(empNo, salary, timeProvider));
+    }
+
+    private void removeOrTerminateSalary(Integer salary, Optional<Salary> currentSalaryOptional) {
+        Salary currentSalary = currentSalaryOptional.get();
+        if (currentSalary.startsToday()) {
+            salaries.remove(currentSalary);
+        } else {
+            currentSalary.terminate();
+        }
+    }
+
+    public Optional<Salary> getCurrentSalary() {
+        return salaries.stream().filter((salary) -> salary.isCurrent()).findFirst();
+    }
+
+    @Override
+    public String toString() {
+        return "Employee{" +
+            "empNo=" + empNo +
+            ", birthDate=" + birthDate +
+            ", hireDate=" + hireDate +
+            ", firstName='" + firstName + '\'' +
+            ", lastName='" + lastName + '\'' +
+            ", gender=" + gender +
+            '}';
     }
 }
