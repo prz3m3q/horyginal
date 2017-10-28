@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "employees")
@@ -37,6 +38,14 @@ public class Employee extends HrsModel {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "emp_no")
     private Collection<Salary> salaries = new LinkedList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "emp_no")
+    private Collection<DepartmentAssignment> departmentAssigments = new LinkedList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "emp_no")
+    private Collection<Title> titles = new LinkedList<>();
 
     @Transient
     private TimeProvider timeProvider;
@@ -74,7 +83,7 @@ public class Employee extends HrsModel {
     public void changeSalary(Integer salary) {
         Optional<Salary> currentSalaryOptional = getCurrentSalary();
         if (currentSalaryOptional.isPresent()) {
-            removeOrTerminateSalary(salary, currentSalaryOptional);
+            removeOrTerminateSalary(currentSalaryOptional);
         }
         addNewSalary(salary);
     }
@@ -83,7 +92,7 @@ public class Employee extends HrsModel {
         salaries.add(new Salary(empNo, salary, timeProvider));
     }
 
-    private void removeOrTerminateSalary(Integer salary, Optional<Salary> currentSalaryOptional) {
+    private void removeOrTerminateSalary(Optional<Salary> currentSalaryOptional) {
         Salary currentSalary = currentSalaryOptional.get();
         if (currentSalary.startsToday()) {
             salaries.remove(currentSalary);
@@ -92,8 +101,49 @@ public class Employee extends HrsModel {
         }
     }
 
+    private boolean isCurrentlyAssignment(Department department) {
+        return getCurrentDepartments().contains(department);
+    }
+
     public Optional<Salary> getCurrentSalary() {
-        return salaries.stream().filter((salary) -> salary.isCurrent()).findFirst();
+        return salaries.stream().filter(Salary::isCurrent).findFirst();
+    }
+
+    public void assignDepartment(Department department) {
+        departmentAssigments.add(new DepartmentAssignment(empNo, department, timeProvider));
+    }
+
+    public void unAssignDepartment(Department department) {
+        departmentAssigments.stream().filter((as) -> as.isAssigned(department)).findFirst().ifPresent((as) -> as.unassign());
+    }
+
+    public Collection<Department> getCurrentDepartments() {
+        return departmentAssigments.stream().filter(DepartmentAssignment::isCurrent).map(DepartmentAssignment::getDepartment).collect(Collectors.toList());
+    }
+
+    public Optional<Title> getCurrentTitle() {
+        return titles.stream().filter(Title::isCurrent).findFirst();
+    }
+
+    public void changeTitle(String title) {
+        Optional<Title> currentTitleOptional = getCurrentTitle();
+        if (currentTitleOptional.isPresent()) {
+            removeOrTerminateTitle(currentTitleOptional);
+        }
+        addNewTitle(title);
+    }
+
+    private void removeOrTerminateTitle(Optional<Title> currentTitleOptional) {
+        Title currentTitle = currentTitleOptional.get();
+        if (currentTitle.startsToday()) {
+            titles.remove(currentTitle);
+        } else {
+            currentTitle.terminate();
+        }
+    }
+
+    private void addNewTitle(String title) {
+        titles.add(new Title(empNo, title, timeProvider));
     }
 
     @Override
@@ -106,5 +156,13 @@ public class Employee extends HrsModel {
             ", lastName='" + lastName + '\'' +
             ", gender=" + gender +
             '}';
+    }
+
+    public Collection<DepartmentAssignment> getDepartmentsHistory() {
+        return departmentAssigments;
+    }
+
+    public Collection<Title> getTitles() {
+        return titles;
     }
 }

@@ -37,6 +37,14 @@ public class Salary {
         return salary;
     }
 
+    public LocalDate getFromDate() {
+        return id.getFromDate();
+    }
+
+    public LocalDate getToDate() {
+        return toDate;
+    }
+
     @Embeddable
     public static class SalaryId implements Serializable {
         @Column(name = "emp_no")
@@ -58,7 +66,7 @@ public class Salary {
         public SalaryId(Integer empNo, TimeProvider timeProvider) {
             this.empNo = empNo;
             this.timeProvider = timeProvider;
-            this.fromDate = LocalDate.now();
+            this.fromDate = timeProvider.today();
         }
 
         @Override
@@ -68,6 +76,10 @@ public class Salary {
 
         public boolean startsToday() {
             return fromDate.isEqual(timeProvider.today());
+        }
+
+        public LocalDate getFromDate() {
+            return fromDate;
         }
     }
 
