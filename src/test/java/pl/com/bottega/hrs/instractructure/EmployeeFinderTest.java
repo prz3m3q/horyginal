@@ -118,6 +118,30 @@ public class EmployeeFinderTest extends InfrastructureTest {
         assertEquals(2, results.getPageNumber());
     }
 
+    @Test
+    public void shouldSearchBySalary() {
+        Employee nowak = createEmployee("Nowak");
+        Employee nowacki = createEmployee("Nowacki");
+        createEmployee("Kowalski");
+
+        executeInTransaction((em) -> {
+            nowak.changeSalary(5000);
+            em.merge(nowak);
+        });
+
+        executeInTransaction((em) -> {
+            nowacki.changeSalary(6000);
+            em.merge(nowacki);
+        });
+
+        //////////////////
+
+        criteria.setBirthDateTo(LocalDate.parse("1981-01-01"));
+        searech();
+
+        assetLastNames("Nowak", "Nowacki");
+    }
+
     private void searech() {
         results = employeeFinder.search(criteria);
     }
