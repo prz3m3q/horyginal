@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Table(name = "dept_emp")
 public class DepartmentAssignment {
 
+    @Transient
     private TimeProvider timeProvider;
 
     public DepartmentAssignment(Integer empNo, Department department, TimeProvider timeProvider) {
