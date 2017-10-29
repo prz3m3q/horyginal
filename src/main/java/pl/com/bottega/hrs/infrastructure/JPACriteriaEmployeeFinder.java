@@ -36,16 +36,44 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
         Predicate predicate = buildPredicate(criteria, criteriaBuilder, employee);
         criteriaQuery.where(predicate);
         Query query = entityManager.createQuery(criteriaQuery);
+        query.setMaxResults(criteria.getPageSize());
+        query.setFirstResult(criteria.getPageSize() * (criteria.getPageNumber() - 1));
         List<BasicEmployeeDto> results = query.getResultList();
         EmployeeSearchResult employeeSearchResult = new EmployeeSearchResult();
         employeeSearchResult.setResults(results);
+        int totalCount = searchTotalCount(criteria);
+        employeeSearchResult.setTotalCount(totalCount);
+        employeeSearchResult.setPageNumber(criteria.getPageNumber());
+        employeeSearchResult.setPagesCount(totalCount / criteria.getPageSize() + (totalCount % criteria.getPageSize() == 0 ? 0 : 1));
         return employeeSearchResult;
+    }
+
+    private int searchTotalCount(EmployeeSearchCriteria criteria) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        Root employee = criteriaQuery.from(Employee.class);
+        criteriaQuery.select(criteriaBuilder.count(employee));
+        Predicate predicate = buildPredicate(criteria, criteriaBuilder, employee);
+        criteriaQuery.where(predicate);
+        Query query = entityManager.createQuery(criteriaQuery);
+        return ((Long)query.getSingleResult()).intValue();
     }
 
     private Predicate buildPredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee) {
         Predicate predicate = criteriaBuilder.conjunction();
         predicate = addFirstNamePredicate(criteria, criteriaBuilder, employee, predicate);
         predicate = addLastNamePredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addBirthDatePredicate(criteria, criteriaBuilder, employee, predicate);
+        return predicate;
+    }
+
+    private Predicate addBirthDatePredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getBirthDateFrom() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(employee.get("birthDate"), criteria.getBirthDateFrom()));
+        }
+        if (criteria.getBirthDateTo() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(employee.get("birthDate"), criteria.getBirthDateTo()));
+        }
         return predicate;
     }
 

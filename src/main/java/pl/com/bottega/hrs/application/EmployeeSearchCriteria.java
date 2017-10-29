@@ -14,8 +14,8 @@ public class EmployeeSearchCriteria {
     private Integer salaryDateFrom, salaryDateTo;
     private Collection<String> title;
     private Collection<String> departmentNumbers;
-    private int pageSize = 0;
-    private int pageNumber = 20;
+    private int pageSize = 20;
+    private int pageNumber = 1;
 
     public String getLastNameQuery() {
         return lastNameQuery;

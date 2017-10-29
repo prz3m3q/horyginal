@@ -7,6 +7,11 @@ public class EmployeeSearchResult {
     private int totalCount;
     private int pageSize;
     private int pageNumber;
+    private int pagesCount;
+
+    public void setPagesCount(int pagesCount) {
+        this.pagesCount = pagesCount;
+    }
 
     public List<BasicEmployeeDto> getResults() {
         return results;
@@ -38,5 +43,9 @@ public class EmployeeSearchResult {
 
     public void setPageNumber(int pageNumber) {
         this.pageNumber = pageNumber;
+    }
+
+    public int getPagesCount() {
+        return pagesCount;
     }
 }

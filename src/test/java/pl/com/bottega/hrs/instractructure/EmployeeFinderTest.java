@@ -62,6 +62,62 @@ public class EmployeeFinderTest extends InfrastructureTest {
         assetLastNames("Nowak", "Nowacki", "Kowalski");
     }
 
+    @Test
+    public void shouldFindByBirthDateQuery() {
+        createEmployee("Jan", "Nowak", LocalDate.parse("1960-01-01"));
+        createEmployee("Stefan", "Nowacki", LocalDate.parse("1980-01-01"));
+        createEmployee("Janusz", "Jankowski", LocalDate.parse("1990-01-01"));
+
+        criteria.setBirthDateFrom(LocalDate.parse("1970-01-01"));
+        criteria.setBirthDateTo(LocalDate.parse("1991-01-01"));
+        searech();
+
+        assetLastNames("Nowacki", "Jankowski");
+    }
+
+    @Test
+    public void shouldFindByBirthDateGratherQuery() {
+        createEmployee("Jan", "Nowak", LocalDate.parse("1960-01-01"));
+        createEmployee("Stefan", "Nowacki", LocalDate.parse("1980-01-01"));
+        createEmployee("Janusz", "Jankowski", LocalDate.parse("1990-01-01"));
+
+        criteria.setBirthDateFrom(LocalDate.parse("1981-01-01"));
+        searech();
+
+        assetLastNames("Jankowski");
+    }
+
+    @Test
+    public void shouldFindByBirthDateLowerQuery() {
+        createEmployee("Jan", "Nowak", LocalDate.parse("1960-01-01"));
+        createEmployee("Stefan", "Nowacki", LocalDate.parse("1980-01-01"));
+        createEmployee("Janusz", "Jankowski", LocalDate.parse("1990-01-01"));
+
+        criteria.setBirthDateTo(LocalDate.parse("1981-01-01"));
+        searech();
+
+        assetLastNames("Nowak", "Nowacki");
+    }
+
+    @Test
+    public void shouldPaginateResults() {
+        createEmployee("Nowak");
+        createEmployee("Nowacki");
+        createEmployee("Kowalski");
+        createEmployee("Kowalska");
+        createEmployee("Kowalskiego");
+
+        criteria.setPageSize(2);
+        criteria.setPageNumber(2);
+        criteria.setFirstNameQuery("Cze");
+        searech();
+
+        assetLastNames("Kowalski", "Kowalska");
+        assertEquals(5, results.getTotalCount());
+        assertEquals(3, results.getPagesCount());
+        assertEquals(2, results.getPageNumber());
+    }
+
     private void searech() {
         results = employeeFinder.search(criteria);
     }
@@ -76,8 +132,13 @@ public class EmployeeFinderTest extends InfrastructureTest {
     }
 
     private Employee createEmployee(String firstName, String lastName) {
+        Employee employee = createEmployee(firstName, lastName, LocalDate.now());
+        return employee;
+    }
+
+    private Employee createEmployee(String firstName, String lastName, LocalDate birthDate) {
         Address address = new Address("Kunickiego", "Lublin");
-        Employee employee = new Employee(employeeNumber++, firstName, lastName, LocalDate.now(), address, new StandardTimeProvider());
+        Employee employee = new Employee(employeeNumber++, firstName, lastName, birthDate, address, new StandardTimeProvider());
         executeInTransaction((em) -> {
             em.persist(employee);
         });
