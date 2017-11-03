@@ -1,17 +1,21 @@
 package pl.com.bottega.hrs.infrastructure;
 
+import org.hibernate.engine.profile.Fetch;
 import pl.com.bottega.hrs.application.BasicEmployeeDto;
 import pl.com.bottega.hrs.application.EmployeeFinder;
 import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
+import pl.com.bottega.hrs.model.Constans;
+import pl.com.bottega.hrs.model.Department;
+import pl.com.bottega.hrs.model.DepartmentAssignment;
 import pl.com.bottega.hrs.model.Employee;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 public class JPACriteriaEmployeeFinder implements EmployeeFinder {
@@ -64,6 +68,55 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
         predicate = addFirstNamePredicate(criteria, criteriaBuilder, employee, predicate);
         predicate = addLastNamePredicate(criteria, criteriaBuilder, employee, predicate);
         predicate = addBirthDatePredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addHireDatePredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addSalaryPredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addTitlesPredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addDepartmentNumbersPredicate(criteria, criteriaBuilder, employee, predicate);
+        return predicate;
+    }
+
+    private Predicate addDepartmentNumbersPredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getDepartmentNumbers() == null) {
+            return predicate;
+        }
+        Join departmentAssigments = employee.join("departmentAssigments");
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(departmentAssigments.get("toDate"), Constans.MAX_DATE));
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.in(departmentAssigments.get("id").get("department").get("deptNo")).value(criteria.getDepartmentNumbers()));
+        return predicate;
+    }
+
+    private Predicate addTitlesPredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getTitles() == null) {
+            return predicate;
+        }
+        Join titles = employee.join("titles");
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(titles.get("toDate"), Constans.MAX_DATE));
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.in(titles.get("id").get("title")).value(criteria.getTitles()));
+        return predicate;
+    }
+
+    private Predicate addSalaryPredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getSalaryFrom() == null && criteria.getSalaryTo() == null) {
+            return predicate;
+        }
+        Join salary = employee.join("salaries");
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(salary.get("toDate"), Constans.MAX_DATE));
+        if (criteria.getSalaryFrom() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(salary.get("salary"), criteria.getSalaryFrom()));
+        }
+        if (criteria.getSalaryTo() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(salary.get("salary"), criteria.getSalaryTo()));
+        }
+        return predicate;
+    }
+
+    private Predicate addHireDatePredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getHireDateFrom() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(employee.get("hireDate"), criteria.getHireDateFrom()));
+        }
+        if (criteria.getHireDateTo() != null) {
+            predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(employee.get("hireDate"), criteria.getHireDateTo()));
+        }
         return predicate;
     }
 

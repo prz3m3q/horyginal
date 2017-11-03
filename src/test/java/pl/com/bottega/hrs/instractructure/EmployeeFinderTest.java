@@ -7,11 +7,11 @@ import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
 import pl.com.bottega.hrs.infrastructure.JPACriteriaEmployeeFinder;
 import pl.com.bottega.hrs.infrastructure.JPQLEmployeeFinder;
-import pl.com.bottega.hrs.model.Address;
-import pl.com.bottega.hrs.model.Employee;
-import pl.com.bottega.hrs.model.StandardTimeProvider;
+import pl.com.bottega.hrs.model.*;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -23,6 +23,7 @@ public class EmployeeFinderTest extends InfrastructureTest {
 //    private EmployeeFinder employeeFinder = new JPQLEmployeeFinder(createEntityManager());
     private EmployeeFinder employeeFinder = new JPACriteriaEmployeeFinder(createEntityManager());
     private EmployeeSearchCriteria criteria = new EmployeeSearchCriteria();
+    private final TimeMachine timeMachine = new TimeMachine();
     private EmployeeSearchResult results;
 
     @Test
@@ -119,27 +120,102 @@ public class EmployeeFinderTest extends InfrastructureTest {
     }
 
     @Test
-    public void shouldSearchBySalary() {
-        Employee nowak = createEmployee("Nowak");
-        Employee nowacki = createEmployee("Nowacki");
+    public void shouldSearchBySalaryTo() {
+        Employee nowak = createEmployee("Nowak", timeMachine);
+        Employee nowacki = createEmployee("Nowacki", timeMachine);
         createEmployee("Kowalski");
 
-        executeInTransaction((em) -> {
-            nowak.changeSalary(5000);
-            em.merge(nowak);
-        });
+        timeMachine.travel(Duration.ofDays(-365 * 2));
+        changeSalaryForEmployee(nowak, 5000);
+        changeSalaryForEmployee(nowacki, 6000);
 
-        executeInTransaction((em) -> {
-            nowacki.changeSalary(6000);
-            em.merge(nowacki);
-        });
+        timeMachine.travel(Duration.ofDays(365));
+        changeSalaryForEmployee(nowak, 7000);
+        changeSalaryForEmployee(nowacki, 8000);
 
-        //////////////////
+        timeMachine.travel(Duration.ofDays(100));
+        changeSalaryForEmployee(nowak, 1000);
+        changeSalaryForEmployee(nowacki, 2000);
 
-        criteria.setBirthDateTo(LocalDate.parse("1981-01-01"));
+        criteria.setSalaryTo(2000);
         searech();
 
         assetLastNames("Nowak", "Nowacki");
+    }
+
+    @Test
+    public void shouldSearchBySalaryFromTo() {
+        Employee nowak = createEmployee("Nowak", timeMachine);
+        Employee nowacki = createEmployee("Nowacki", timeMachine);
+        createEmployee("Kowalski");
+
+        timeMachine.travel(Duration.ofDays(-365 * 2));
+        changeSalaryForEmployee(nowak, 5000);
+        changeSalaryForEmployee(nowacki, 6000);
+
+        timeMachine.travel(Duration.ofDays(365));
+        changeSalaryForEmployee(nowak, 7000);
+        changeSalaryForEmployee(nowacki, 8000);
+
+        timeMachine.travel(Duration.ofDays(100));
+        changeSalaryForEmployee(nowak, 1000);
+        changeSalaryForEmployee(nowacki, 2000);
+
+        criteria.setSalaryFrom(1500);
+        criteria.setSalaryTo(10000);
+        searech();
+
+        assetLastNames("Nowacki");
+    }
+
+    @Test
+    public void shouldSearchByTile() {
+        Employee nowak = createEmployee("Nowak", timeMachine);
+        Employee nowacki = createEmployee("Nowacki", timeMachine);
+
+        timeMachine.travel(Duration.ofDays(-365 * 2));
+        changeTitleForEmployee(nowak, "title1");
+        changeTitleForEmployee(nowacki, "title2");
+
+        timeMachine.travel(Duration.ofDays(365));
+        changeTitleForEmployee(nowak, "title3");
+        changeTitleForEmployee(nowacki, "title4");
+
+        timeMachine.travel(Duration.ofDays(100));
+        changeTitleForEmployee(nowak, "title5");
+        changeTitleForEmployee(nowacki, "title2");
+
+        criteria.setTitles(Arrays.asList("title5"));
+        searech();
+
+        assetLastNames("Nowak");
+    }
+
+    @Test
+    public void shouldSearchByDepartmentNumbers() {
+        Employee nowak = createEmployee("Nowak", timeMachine);
+        Employee nowacki = createEmployee("Nowacki", timeMachine);
+
+        Department dept1 = createDepartment("d001", "Dept1");
+        Department dept2 = createDepartment("d002", "Dept2");
+        Department dept3 = createDepartment("d003", "Dept3");
+        Department dept4 = createDepartment("d004", "Dept4");
+
+        timeMachine.travel(Duration.ofDays(-365 * 2));
+        assignDepartmentToEmployee(nowak, dept1);
+        assignDepartmentToEmployee(nowacki, dept2);
+
+        timeMachine.travel(Duration.ofDays(365));
+        assignDepartmentToEmployee(nowak, dept3);
+        assignDepartmentToEmployee(nowacki, dept4);
+        unassignDepartmentToEmployee(nowak, dept1);
+
+        timeMachine.travel(Duration.ofDays(100));
+
+        criteria.setDepartmentNumbers(Arrays.asList("d001", "d004", "d002"));
+        searech();
+
+        assetLastNames("Nowacki", "Nowacki");
     }
 
     private void searech() {
@@ -160,6 +236,34 @@ public class EmployeeFinderTest extends InfrastructureTest {
         return employee;
     }
 
+    private void changeSalaryForEmployee(Employee employee, int salary) {
+        executeInTransaction((em) -> {
+            employee.changeSalary(salary);
+            em.merge(employee);
+        });
+    }
+
+    private void changeTitleForEmployee(Employee employee, String title) {
+        executeInTransaction((em) -> {
+            employee.changeTitle(title);
+            em.merge(employee);
+        });
+    }
+
+    private void assignDepartmentToEmployee(Employee employee, Department department) {
+        executeInTransaction((em) -> {
+            employee.assignDepartment(department);
+            em.merge(employee);
+        });
+    }
+
+    private void unassignDepartmentToEmployee(Employee employee, Department department) {
+        executeInTransaction((em) -> {
+            employee.unAssignDepartment(department);
+            em.merge(employee);
+        });
+    }
+
     private Employee createEmployee(String firstName, String lastName, LocalDate birthDate) {
         Address address = new Address("Kunickiego", "Lublin");
         Employee employee = new Employee(employeeNumber++, firstName, lastName, birthDate, address, new StandardTimeProvider());
@@ -167,5 +271,22 @@ public class EmployeeFinderTest extends InfrastructureTest {
             em.persist(employee);
         });
         return employee;
+    }
+
+    private Employee createEmployee(String lastName, TimeProvider timeProvider) {
+        Address address = new Address("Kunickiego", "Lublin");
+        Employee employee = new Employee(employeeNumber++, "Czesiek", lastName, LocalDate.now(), address, timeProvider);
+        executeInTransaction((em) -> {
+            em.persist(employee);
+        });
+        return employee;
+    }
+
+    private Department createDepartment(String deptNo, String name) {
+        Department department = new Department(deptNo, name);
+        executeInTransaction((em) -> {
+            em.persist(department);
+        });
+        return department;
     }
 }

@@ -83,6 +83,7 @@ public class EmployeeTest {
         assertEquals(2, sut.getCurrentDepartments().size());
     }
 
+    @Test
     public void shouldUnassignedDepartments() {
         sut.assignDepartment(department1);
         sut.assignDepartment(department2);

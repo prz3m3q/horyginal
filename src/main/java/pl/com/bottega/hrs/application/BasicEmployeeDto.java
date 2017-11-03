@@ -1,7 +1,5 @@
 package pl.com.bottega.hrs.application;
 
-import pl.com.bottega.hrs.model.Salary;
-
 public class BasicEmployeeDto {
     private Integer empNo;
     private String firstName;

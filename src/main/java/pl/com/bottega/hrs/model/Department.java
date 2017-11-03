@@ -11,10 +11,18 @@ public class Department {
 
     @Id
     @Column(name = "dept_no", columnDefinition="char(4)")
-    private String  deptNo;
+    private String deptNo;
 
     @Column(name = "dept_name")
     private String deptName;
+
+    public Department(String deptNo, String deptName) {
+        this.deptNo = deptNo;
+        this.deptName = deptName;
+    }
+
+    public Department() {
+    }
 
     @Override
     public boolean equals(Object o) {

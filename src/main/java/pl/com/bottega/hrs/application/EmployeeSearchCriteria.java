@@ -1,18 +1,15 @@
 package pl.com.bottega.hrs.application;
 
-import pl.com.bottega.hrs.model.Department;
-
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.stream.Collector;
 
 public class EmployeeSearchCriteria {
     private String lastNameQuery;
     private String firstNameQuery;
     private LocalDate birthDateFrom, birthDateTo;
     private LocalDate hireDateFrom, hireDateTo;
-    private Integer salaryDateFrom, salaryDateTo;
-    private Collection<String> title;
+    private Integer salaryFrom, salaryTo;
+    private Collection<String> titles;
     private Collection<String> departmentNumbers;
     private int pageSize = 20;
     private int pageNumber = 1;
@@ -65,28 +62,28 @@ public class EmployeeSearchCriteria {
         this.hireDateTo = hireDateTo;
     }
 
-    public Integer getSalaryDateFrom() {
-        return salaryDateFrom;
+    public Integer getSalaryFrom() {
+        return salaryFrom;
     }
 
-    public void setSalaryDateFrom(Integer salaryDateFrom) {
-        this.salaryDateFrom = salaryDateFrom;
+    public void setSalaryFrom(Integer salaryFrom) {
+        this.salaryFrom = salaryFrom;
     }
 
-    public Integer getSalaryDateTo() {
-        return salaryDateTo;
+    public Integer getSalaryTo() {
+        return salaryTo;
     }
 
-    public void setSalaryDateTo(Integer salaryDateTo) {
-        this.salaryDateTo = salaryDateTo;
+    public void setSalaryTo(Integer salaryTo) {
+        this.salaryTo = salaryTo;
     }
 
-    public Collection<String> getTitle() {
-        return title;
+    public Collection<String> getTitles() {
+        return titles;
     }
 
-    public void setTitle(Collection<String> title) {
-        this.title = title;
+    public void setTitles(Collection<String> title) {
+        this.titles = title;
     }
 
     public Collection<String> getDepartmentNumbers() {
