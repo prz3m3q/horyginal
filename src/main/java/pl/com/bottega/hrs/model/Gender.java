@@ -1,5 +1,5 @@
 package pl.com.bottega.hrs.model;
 
-enum Gender {
+public enum Gender {
     M, F;
 }

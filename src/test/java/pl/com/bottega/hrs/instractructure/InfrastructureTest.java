@@ -38,6 +38,14 @@ public abstract class InfrastructureTest {
         em.getTransaction().commit();
     }
 
+    protected void executeInTransaction(EntityManager em, Runnable runnable) {
+        em.getTransaction().begin();
+        em.flush();
+        em.clear();
+        runnable.run();
+        em.getTransaction().commit();
+    }
+
     protected EntityManager createEntityManager() {
         return emf.createEntityManager();
     }

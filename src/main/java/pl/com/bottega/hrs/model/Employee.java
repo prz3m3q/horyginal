@@ -50,7 +50,8 @@ public class Employee extends HrsModel {
     @Transient
     private TimeProvider timeProvider;
 
-    public Employee() {}
+    public Employee() {
+    }
 
     public Employee(Integer empNo, String firstName, String lastName, LocalDate birthDate, Address address, TimeProvider timeProvider) {
         this.empNo = empNo;
@@ -142,6 +143,12 @@ public class Employee extends HrsModel {
         }
     }
 
+    public void updateProfile(String firstName, String lastName, LocalDate birthDate, Address address, Gender gender) {
+        updateProfile(firstName, lastName, birthDate);
+        this.address = address;
+        this.gender = gender;
+    }
+
     private void addNewTitle(String title) {
         titles.add(new Title(empNo, title, timeProvider));
     }
@@ -164,5 +171,9 @@ public class Employee extends HrsModel {
 
     public Collection<Title> getTitles() {
         return titles;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 }

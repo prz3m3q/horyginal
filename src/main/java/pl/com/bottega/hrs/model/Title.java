@@ -30,7 +30,7 @@ public class Title {
     }
 
     @Embeddable
-    private static class TitleId implements Serializable{
+    public static class TitleId implements Serializable {
 
         @Column(name = "emp_no")
         private Integer empNo;

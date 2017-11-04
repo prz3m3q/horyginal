@@ -4,8 +4,7 @@ import pl.com.bottega.hrs.application.BasicEmployeeDto;
 import pl.com.bottega.hrs.application.EmployeeFinder;
 import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
-import pl.com.bottega.hrs.model.Constans;
-import pl.com.bottega.hrs.model.Employee;
+import pl.com.bottega.hrs.model.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -28,9 +27,9 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
         Root employee = criteriaQuery.from(Employee.class);
         criteriaQuery.select(criteriaBuilder.construct(
             BasicEmployeeDto.class,
-            employee.get("empNo"),
-            employee.get("firstName"),
-            employee.get("lastName")
+            employee.get(Employee_.empNo),
+            employee.get(Employee_.firstName),
+            employee.get(Employee_.lastName)
         ));
         Predicate predicate = buildPredicate(criteria, criteriaBuilder, employee);
         criteriaQuery.where(predicate);
@@ -75,10 +74,10 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
         if (criteria.getDepartmentNumbers() == null || criteria.getDepartmentNumbers().size() <= 0) {
             return predicate;
         }
-        Join departmentAssigments = employee.join("departmentAssigments");
-        Join department = departmentAssigments.join("id").join("department");
-        predicate = criteriaBuilder.and(predicate, department.get("deptNo").in(criteria.getDepartmentNumbers()));
-        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(departmentAssigments.get("toDate"), Constans.MAX_DATE));
+        Join departmentAssigments = employee.join(Employee_.departmentAssigments);
+        Join department = departmentAssigments.join(DepartmentAssignment_.id).join("department");
+        predicate = criteriaBuilder.and(predicate, department.get(Department_.deptNo).in(criteria.getDepartmentNumbers()));
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(departmentAssigments.get(DepartmentAssignment_.toDate), Constans.MAX_DATE));
         return predicate;
     }
 
