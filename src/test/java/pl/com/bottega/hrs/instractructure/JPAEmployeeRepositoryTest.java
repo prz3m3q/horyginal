@@ -5,6 +5,7 @@ import pl.com.bottega.hrs.infrastructure.JPAEmployeeRepository;
 import pl.com.bottega.hrs.model.Address;
 import pl.com.bottega.hrs.model.Employee;
 import pl.com.bottega.hrs.model.StandardTimeProvider;
+import pl.com.bottega.hrs.model.exception.NoSuchEmployee;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
@@ -32,8 +33,14 @@ public class JPAEmployeeRepositoryTest extends InfrastructureTest {
         executeInTransaction(entityManager, () -> sut.save(employee));
 
         //then
+
         executeInTransaction(entityManager, () -> {
-            Employee employeeFromRepo = sut.get(1);
+            Employee employeeFromRepo = null;
+            try {
+                employeeFromRepo = sut.get(1);
+            } catch (NoSuchEmployee noSuchEmployee) {
+                noSuchEmployee.printStackTrace();
+            }
             assertNotNull(employeeFromRepo);
             assertEquals("Kowalski", employeeFromRepo.getLastName());
         });
@@ -52,6 +59,11 @@ public class JPAEmployeeRepositoryTest extends InfrastructureTest {
 
         //then
         assertEquals(new Integer(3), number);
+    }
+
+    @Test(expected = NoSuchEmployee.class)
+    public void checkNoExistsEmployee() {
+        sut.get(1);
     }
 
     private Employee createEmployee(int empNo, String lastName) {

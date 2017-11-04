@@ -1,6 +1,7 @@
 package pl.com.bottega.hrs.infrastructure;
 
 import pl.com.bottega.hrs.model.Employee;
+import pl.com.bottega.hrs.model.exception.NoSuchEmployee;
 import pl.com.bottega.hrs.model.repositories.EmployeeRepository;
 
 import javax.persistence.EntityManager;
@@ -31,6 +32,10 @@ public class JPAEmployeeRepository implements EmployeeRepository {
 
     @Override
     public Employee get(Integer empNo) {
-        return entityManager.find(Employee.class, empNo);
+        Employee employee = entityManager.find(Employee.class, empNo);
+        if (employee == null) {
+            throw new NoSuchEmployee();
+        }
+        return employee;
     }
 }
