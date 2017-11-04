@@ -1,21 +1,16 @@
 package pl.com.bottega.hrs.infrastructure;
 
-import org.hibernate.engine.profile.Fetch;
 import pl.com.bottega.hrs.application.BasicEmployeeDto;
 import pl.com.bottega.hrs.application.EmployeeFinder;
 import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
 import pl.com.bottega.hrs.model.Constans;
-import pl.com.bottega.hrs.model.Department;
-import pl.com.bottega.hrs.model.DepartmentAssignment;
 import pl.com.bottega.hrs.model.Employee;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.time.LocalDate;
 import java.util.List;
 
 public class JPACriteriaEmployeeFinder implements EmployeeFinder {
@@ -29,7 +24,7 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
     @Override
     public EmployeeSearchResult search(EmployeeSearchCriteria criteria) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<BasicEmployeeDto> criteriaQuery = criteriaBuilder.createQuery(BasicEmployeeDto.class);
+        CriteriaQuery<BasicEmployeeDto> criteriaQuery = criteriaBuilder.createQuery(BasicEmployeeDto.class).distinct(true);
         Root employee = criteriaQuery.from(Employee.class);
         criteriaQuery.select(criteriaBuilder.construct(
             BasicEmployeeDto.class,
@@ -71,7 +66,19 @@ public class JPACriteriaEmployeeFinder implements EmployeeFinder {
         predicate = addHireDatePredicate(criteria, criteriaBuilder, employee, predicate);
         predicate = addSalaryPredicate(criteria, criteriaBuilder, employee, predicate);
         predicate = addTitlesPredicate(criteria, criteriaBuilder, employee, predicate);
-        predicate = addDepartmentNumbersPredicate(criteria, criteriaBuilder, employee, predicate);
+        predicate = addDepartmentsPredicate(criteria, criteriaBuilder, employee, predicate);
+//        predicate = addDepartmentNumbersPredicate(criteria, criteriaBuilder, employee, predicate);
+        return predicate;
+    }
+
+    private Predicate addDepartmentsPredicate(EmployeeSearchCriteria criteria, CriteriaBuilder criteriaBuilder, Root employee, Predicate predicate) {
+        if (criteria.getDepartmentNumbers() == null || criteria.getDepartmentNumbers().size() <= 0) {
+            return predicate;
+        }
+        Join departmentAssigments = employee.join("departmentAssigments");
+        Join department = departmentAssigments.join("id").join("department");
+        predicate = criteriaBuilder.and(predicate, department.get("deptNo").in(criteria.getDepartmentNumbers()));
+        predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(departmentAssigments.get("toDate"), Constans.MAX_DATE));
         return predicate;
     }
 

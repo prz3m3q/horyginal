@@ -34,6 +34,10 @@ public class Department {
         return deptNo.equals(that.deptNo);
     }
 
+    public String getNumber() {
+        return deptNo;
+    }
+
     @Override
     public int hashCode() {
         return deptNo != null ? deptNo.hashCode() : 0;

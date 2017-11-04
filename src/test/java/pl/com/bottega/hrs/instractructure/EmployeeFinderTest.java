@@ -6,13 +6,14 @@ import pl.com.bottega.hrs.application.EmployeeFinder;
 import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
 import pl.com.bottega.hrs.infrastructure.JPACriteriaEmployeeFinder;
-import pl.com.bottega.hrs.infrastructure.JPQLEmployeeFinder;
 import pl.com.bottega.hrs.model.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -33,9 +34,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         createEmployee("Kowalski");
 
         criteria.setLastNameQuery("nowa");
-        searech();
+        search();
 
-        assetLastNames("Nowak", "Nowacki");
+        assertLastNames("Nowak", "Nowacki");
     }
 
     @Test
@@ -46,9 +47,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
 
         criteria.setLastNameQuery("nowa");
         criteria.setFirstNameQuery("Ja");
-        searech();
+        search();
 
-        assetLastNames("Nowak");
+        assertLastNames("Nowak");
     }
 
     @Test
@@ -58,9 +59,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         createEmployee("Kowalski");
 
         criteria.setFirstNameQuery("Cze");
-        searech();
+        search();
 
-        assetLastNames("Nowak", "Nowacki", "Kowalski");
+        assertLastNames("Nowak", "Nowacki", "Kowalski");
     }
 
     @Test
@@ -71,9 +72,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
 
         criteria.setBirthDateFrom(LocalDate.parse("1970-01-01"));
         criteria.setBirthDateTo(LocalDate.parse("1991-01-01"));
-        searech();
+        search();
 
-        assetLastNames("Nowacki", "Jankowski");
+        assertLastNames("Nowacki", "Jankowski");
     }
 
     @Test
@@ -83,9 +84,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         createEmployee("Janusz", "Jankowski", LocalDate.parse("1990-01-01"));
 
         criteria.setBirthDateFrom(LocalDate.parse("1981-01-01"));
-        searech();
+        search();
 
-        assetLastNames("Jankowski");
+        assertLastNames("Jankowski");
     }
 
     @Test
@@ -95,9 +96,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         createEmployee("Janusz", "Jankowski", LocalDate.parse("1990-01-01"));
 
         criteria.setBirthDateTo(LocalDate.parse("1981-01-01"));
-        searech();
+        search();
 
-        assetLastNames("Nowak", "Nowacki");
+        assertLastNames("Nowak", "Nowacki");
     }
 
     @Test
@@ -111,9 +112,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         criteria.setPageSize(2);
         criteria.setPageNumber(2);
         criteria.setFirstNameQuery("Cze");
-        searech();
+        search();
 
-        assetLastNames("Kowalski", "Kowalska");
+        assertLastNames("Kowalski", "Kowalska");
         assertEquals(5, results.getTotalCount());
         assertEquals(3, results.getPagesCount());
         assertEquals(2, results.getPageNumber());
@@ -138,9 +139,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         changeSalaryForEmployee(nowacki, 2000);
 
         criteria.setSalaryTo(2000);
-        searech();
+        search();
 
-        assetLastNames("Nowak", "Nowacki");
+        assertLastNames("Nowak", "Nowacki");
     }
 
     @Test
@@ -163,9 +164,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
 
         criteria.setSalaryFrom(1500);
         criteria.setSalaryTo(10000);
-        searech();
+        search();
 
-        assetLastNames("Nowacki");
+        assertLastNames("Nowacki");
     }
 
     @Test
@@ -186,9 +187,9 @@ public class EmployeeFinderTest extends InfrastructureTest {
         changeTitleForEmployee(nowacki, "title2");
 
         criteria.setTitles(Arrays.asList("title5"));
-        searech();
+        search();
 
-        assetLastNames("Nowak");
+        assertLastNames("Nowak");
     }
 
     @Test
@@ -213,16 +214,50 @@ public class EmployeeFinderTest extends InfrastructureTest {
         timeMachine.travel(Duration.ofDays(100));
 
         criteria.setDepartmentNumbers(Arrays.asList("d001", "d004", "d002"));
-        searech();
+        search();
 
-        assetLastNames("Nowacki", "Nowacki");
+        assertLastNames("Nowacki");
     }
 
-    private void searech() {
+    @Test
+    public void shouldSearchByHistoricalDepartments() {
+        //given
+        Department dept1 = createDepartment("d001", "Dept1");
+        Department dept2 = createDepartment("d002", "Dept2");
+        Department dept3 = createDepartment("d003", "Dept3");
+        Department dept4 = createDepartment("d004", "Dept4");
+
+        employee().withLastName("Nowak").withDepartment(dept1).withDepartment(dept3).withoutDepartment(dept1).create();
+        employee().withLastName("Nowacki").withDepartment(dept2, "1960-01-01").withDepartment(dept4).create();
+
+        //when
+        criteria.setDepartmentNumbers(Arrays.asList(dept1.getNumber(), dept2.getNumber(), dept4.getNumber()));
+        search();
+
+        //then
+        assertLastNames("Nowacki");
+    }
+
+    @Test
+    public void np1Demo() {
+        int n = 5;
+        for (int i = 0; i <= 5; i++) {
+            employee().withSalary(5000).withLastName("Nowak" + i).create();
+        }
+
+        executeInTransaction((em) -> {
+            List<Employee> emps = em.createQuery("SELECT e FROM Employee e JOIN FETCH e.salaries JOIN FETCH e.address").getResultList();
+            for (Employee e: emps) {
+                System.out.println(e.getCurrentSalary().get());
+            }
+        });
+    }
+
+    private void search() {
         results = employeeFinder.search(criteria);
     }
 
-    private void assetLastNames(String... lastNames) {
+    private void assertLastNames(String... lastNames) {
         assertEquals(Arrays.asList(lastNames), results.getResults().stream().map(BasicEmployeeDto::getLastName).collect(Collectors.toList()));
     }
 
@@ -288,5 +323,84 @@ public class EmployeeFinderTest extends InfrastructureTest {
             em.persist(department);
         });
         return department;
+    }
+
+    class EmployeeBuilder {
+        private String firstName = "Czesiek";
+        private String lastName = "Nowak";
+        private String birthDate = "1990-01-01";
+        private Address address = new Address("al. Warszawska 10", "Lublin");
+        private List<Consumer<Employee>> consumers = new LinkedList<>();
+
+        EmployeeBuilder withDepartment(Department department) {
+            consumers.add(employee -> {
+                employee.assignDepartment(department);
+            });
+            return this;
+        }
+
+        EmployeeBuilder withoutDepartment(Department department) {
+            consumers.add(employee -> {
+                employee.unAssignDepartment(department);
+            });
+            return this;
+        }
+
+        EmployeeBuilder withDepartment(Department department, String fromDate) {
+            consumers.add(employee -> {
+                timeMachine.travel(LocalDate.parse(fromDate));
+                employee.assignDepartment(department);
+                timeMachine.reset();
+            });
+            return this;
+        }
+
+        EmployeeBuilder withName(String firstName, String lastName) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            return this;
+        }
+
+        EmployeeBuilder withLastName(String lastName) {
+            this.lastName = lastName;
+            return this;
+        }
+
+        EmployeeBuilder withFirstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        EmployeeBuilder withBirthDate(String birthDate) {
+            this.birthDate = birthDate;
+            return this;
+        }
+
+        EmployeeBuilder withSalary(Integer salary) {
+            consumers.add(employee -> employee.changeSalary(salary));
+            return this;
+        }
+
+        EmployeeBuilder withSalary(Integer salary, String fromDate) {
+            consumers.add(employee -> {
+                timeMachine.travel(LocalDate.parse(fromDate));
+                employee.changeSalary(salary);
+                timeMachine.reset();
+            });
+            return this;
+        }
+
+        Employee create() {
+            Employee employee = new Employee(employeeNumber++, firstName, lastName, LocalDate.parse(birthDate), address, timeMachine);
+            consumers.forEach(c -> c.accept(employee));
+            executeInTransaction((em) -> {
+                em.persist(employee);
+            });
+            return employee;
+        }
+    }
+
+    private EmployeeBuilder employee() {
+        return new EmployeeBuilder();
     }
 }
