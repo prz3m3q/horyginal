@@ -2,9 +2,9 @@ package pl.com.bottega.hrs.instractructure;
 
 import org.junit.Test;
 import pl.com.bottega.hrs.infrastructure.JPAEmployeeRepository;
+import pl.com.bottega.hrs.infrastructure.StandardTimeProvider;
 import pl.com.bottega.hrs.model.Address;
 import pl.com.bottega.hrs.model.Employee;
-import pl.com.bottega.hrs.model.StandardTimeProvider;
 import pl.com.bottega.hrs.model.exception.NoSuchEmployee;
 
 import javax.persistence.EntityManager;

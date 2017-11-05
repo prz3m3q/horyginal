@@ -6,6 +6,7 @@ import pl.com.bottega.hrs.application.EmployeeFinder;
 import pl.com.bottega.hrs.application.EmployeeSearchCriteria;
 import pl.com.bottega.hrs.application.EmployeeSearchResult;
 import pl.com.bottega.hrs.infrastructure.JPACriteriaEmployeeFinder;
+import pl.com.bottega.hrs.infrastructure.StandardTimeProvider;
 import pl.com.bottega.hrs.model.*;
 
 import java.time.Duration;
@@ -237,6 +238,8 @@ public class EmployeeFinderTest extends InfrastructureTest {
         //then
         assertLastNames("Nowacki");
     }
+
+
 
     @Test
     public void np1Demo() {

@@ -1,9 +1,14 @@
 package pl.com.bottega.hrs.model;
 
+import pl.com.bottega.hrs.application.DepartmentDto;
+import pl.com.bottega.hrs.application.SalaryDto;
+import pl.com.bottega.hrs.application.TitleDto;
+
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -67,6 +72,30 @@ public class Employee extends HrsModel {
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
+    }
+
+    public List<String> getCurrentDepartmentsAsList() {
+        return this.getCurrentDepartments().stream().map((dept) -> dept.getNumber()).collect(Collectors.toList());
+    }
+
+    public Integer getEmpNo() {
+        return empNo;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public Collection<DepartmentAssignment> getDepartmentAssigments() {
+        return departmentAssigments;
     }
 
     public String getFirstName() {
@@ -175,5 +204,17 @@ public class Employee extends HrsModel {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public List<SalaryDto> getSalariesHistoryAsDto() {
+        return getSalaries().stream().map(SalaryDto::new).collect(Collectors.toList());
+    }
+
+    public List<DepartmentDto> getDepartmentsHistoryAsDto() {
+        return getDepartmentsHistory().stream().map(DepartmentDto::new).collect(Collectors.toList());
+    }
+
+    public List<TitleDto> getTitlesAsDto() {
+        return getTitles().stream().map(TitleDto::new).collect(Collectors.toList());
     }
 }

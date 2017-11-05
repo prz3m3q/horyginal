@@ -1,5 +1,7 @@
 package pl.com.bottega.hrs.application;
 
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import pl.com.bottega.hrs.model.Department;
 import pl.com.bottega.hrs.model.Employee;
 import pl.com.bottega.hrs.model.TimeProvider;
@@ -7,17 +9,22 @@ import pl.com.bottega.hrs.model.commands.AddEmployeeCommand;
 import pl.com.bottega.hrs.model.repositories.DepartmentRepository;
 import pl.com.bottega.hrs.model.repositories.EmployeeRepository;
 
+import javax.transaction.Transactional;
+
+@Component
 public class AddEmployeeHandler {
     private EmployeeRepository employeeRepository;
     private DepartmentRepository departmentRepository;
     private TimeProvider timeProvider;
 
-    public AddEmployeeHandler(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository, TimeProvider timeProvider) {
+    public AddEmployeeHandler(EmployeeRepository employeeRepository, DepartmentRepository departmentRepository,
+                              TimeProvider timeProvider) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.timeProvider = timeProvider;
     }
 
+    @Transactional
     public void handler(AddEmployeeCommand cmd) {
         Employee employee = new Employee(
             employeeRepository.generateNumber(),
